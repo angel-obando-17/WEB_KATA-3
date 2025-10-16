@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tablero de avance – Proyecto Bioetanol</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#f8f9fa;
+      --ink:#1a1a1a;
+      --muted:#6c757d;
+      --primary:#0066cc;
+      --accent:#00b894;
+      --warning:#ffd166;
+      --danger:#ff6b6b;
+      --ok:#4ade80;
+      --bar:#e9ecef;
+      --shadow: 0 2px 8px rgba(0,0,0,.08);
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:#ffffff;color:var(--ink);font-family:"Times New Roman", Times, serif;}
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px 64px}
+    header{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #e9ecef}
+    h1{font-weight:700;letter-spacing:.3px;margin:0;font-size:clamp(24px,3vw,32px);color:#1a1a1a}
+    .tag{color:var(--primary);font-weight:700}
+    .card{background:#ffffff;border:1px solid #dee2e6;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+    .grid{display:grid;grid-template-columns:1fr;gap:20px}
+    @media(min-width:880px){.grid{grid-template-columns:1.2fr .8fr}}
+
+    .progress-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .summary-item{background:#f8f9fa;border:1px solid #dee2e6;padding:16px;border-radius:10px}
+    .summary-head{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:10px}
+    .bar{height:14px;background:var(--bar);border-radius:999px;overflow:hidden;}
+    .bar > span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .5s ease;}
+    .pct{font-weight:700;color:var(--ink)}
+
+    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}
+    .pill{padding:6px 12px;border-radius:999px;background:#e9ecef;border:1px solid #dee2e6}
+
+    .table-card{margin-top:20px}
+    table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:10px;border:1px solid #dee2e6}
+    th,td{padding:12px 10px;vertical-align:top}
+    thead th{position:sticky;top:0;background:#f8f9fa;text-align:left;color:#495057;font-size:13px;font-weight:700;border-bottom:2px solid #dee2e6}
+    tbody tr:nth-child(even){background:#ffffff}
+    tbody tr:nth-child(odd){background:#f8f9fa}
+    tbody tr:hover{background:#e9ecef}
+    td small{color:var(--muted)}
+    .w-week{white-space:nowrap}
+    input[type="number"]{width:80px;background:#ffffff;border:1px solid #ced4da;color:var(--ink);border-radius:6px;padding:6px 8px;font-weight:600}
+    input[type="number"]:focus{outline:none;border-color:var(--primary)}
+    input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button{appearance:none;margin:0}
+    .weight{font-weight:700;color:var(--primary)}
+    .row-progress{display:flex;align-items:center;gap:8px}
+    .row-progress .mini{height:10px;background:#e9ecef;border-radius:8px;flex:1}
+    .row-progress .mini>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--primary));transition:width .5s ease}
+
+    .tools{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+    button{cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid #dee2e6;background:#ffffff;color:var(--ink);font-weight:600;box-shadow:var(--shadow);transition:all .2s}
+    button:hover{background:#f8f9fa;border-color:var(--primary);color:var(--primary)}
+    button.secondary{background:#f8f9fa}
+
+    .note{color:var(--muted);font-size:13px;line-height:1.5}
+    .footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center;padding-top:16px;border-top:1px solid #e9ecef}
+    .ring{display:grid;place-items:center;aspect-ratio:1;border-radius:50%;background:
+      radial-gradient(closest-side, #ffffff 78%, transparent 80% 100%),
+      conic-gradient(var(--primary) var(--pct,0%), #e9ecef 0);
+      width:120px;border:2px solid #dee2e6}
+    .ring b{font-size:20px;color:var(--ink)}
+    .side{display:grid;gap:16px}
+    .side .card{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+    
+    .chart-container{margin-top:20px;padding:20px;background:#f8f9fa;border-radius:10px;border:1px solid #dee2e6}
+    .chart-title{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--ink)}
+    canvas{max-width:100%;height:auto}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Tablero de avance <span class="tag">Bioetanol</span></h1>
+      <div class="legend">
+        <span class="pill">Ingresa tu <b>avance (%)</b> por actividad</span>
+        <span class="pill">Cálculo automático por <b>pesos</b></span>
+        <span class="pill">Se guarda en tu <b>navegador</b></span>
+      </div>
+    </header>
+
+    <!-- Configuración de fechas -->
+    <section class="card" style="margin-bottom:20px">
+      <h3 style="margin-top:0">⏱️ Configuración del Timeline</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:12px">
+        <div>
+          <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px"><b>Fecha de inicio (Semana 1)</b></label>
+          <input type="date" id="startDate" style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:6px;font-family:'Times New Roman',serif">
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px"><b>Semana actual</b></label>
+          <select id="currentWeek" style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:6px;font-weight:600;font-family:'Times New Roman',serif;background:#ffffff">
+            <option value="0">No iniciado</option>
+            <option value="1">Semana 1</option>
+            <option value="2">Semana 2</option>
+            <option value="3">Semana 3</option>
+            <option value="4">Semana 4</option>
+            <option value="5">Semana 5</option>
+            <option value="6">Semana 6</option>
+            <option value="7">Semana 7</option>
+            <option value="8">Semana 8</option>
+            <option value="9">Semana 9</option>
+            <option value="10">Semana 10</option>
+            <option value="11">Semana 11</option>
+            <option value="12">Semana 12</option>
+            <option value="13">Semana 13</option>
+            <option value="14">Semana 14</option>
+            <option value="15">Semana 15</option>
+          </select>
+        </div>
+      </div>
+      <div id="weekDates" style="font-size:12px;color:var(--muted);line-height:1.8"></div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2 style="margin-top:0">Resumen de progreso</h2>
+        <div class="progress-summary" id="summary"></div>
+        <div class="tools">
+          <button id="save">Guardar</button>
+          <button id="reset">Reiniciar avances</button>
+          <button id="print" class="secondary">Imprimir / PDF</button>
+        </div>
+        <p class="note">Consejo: escribe únicamente números entre 0 y 100 en la columna <b>Avance (%)</b>. El tablero calcula el avance de cada objetivo y del proyecto con base en los pesos definidos.</p>
+      </section>
+
+      <aside class="side">
+        <div class="card" id="overallCard">
+          <div class="ring" id="overallRing" style="--pct:0%"><b id="overallPct">0%</b></div>
+          <div>
+            <h3 style="margin:.2rem 0 6px">Avance total del proyecto</h3>
+            <div class="bar"><span id="overallBar" style="width:0%"></span></div>
+            <p class="note" style="margin:.6rem 0 0">Pondera el avance de cada objetivo por su peso en el proyecto.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Pesos de los objetivos</h3>
+          <ul style="margin:0;padding-left:18px;line-height:1.6">
+            <li><b>Objetivo 1:</b> 20%</li>
+            <li><b>Objetivo 2:</b> 35%</li>
+            <li><b>Objetivo 3:</b> 25%</li>
+            <li><b>Objetivo 4:</b> 20%</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Curva S -->
+    <section class="card chart-container">
+      <h3 class="chart-title">Curva S del Proyecto</h3>
+      <canvas id="curvaS" width="800" height="300"></canvas>
+      <p class="note" style="margin-top:12px">La curva S muestra el avance acumulado planificado vs. el avance real del proyecto a lo largo de las 15 semanas.</p>
+    </section>
+
+    <!-- Tablas -->
+    <section class="table-card card" id="o1">
+      <h3 style="margin-top:0">Tabla 1. Actividades Objetivo 1.</h3>
+      <p><b>Objetivo 1.</b> Gestionar un proyecto para la obtención de bioetanol a partir de carbohidratos presentes en <i>C. vulgaris</i> utilizando una solución acidificada de clorito de sodio.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Actividad</th>
+              <th>Descripción</th>
+              <th>Semana</th>
+              <th>Peso (%)</th>
+              <th>Avance (%)</th>
+              <th>Progreso</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-o1"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="table-card card" id="o2">
+      <h3 style="margin-top:0">Tabla 2. Actividades Objetivo 2.</h3>
+      <p><b>Objetivo 2.</b> Determinar los requerimientos másicos y energéticos del proceso de obtención de bioetanol.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Actividad</th>
+              <th>Descripción</th>
+              <th>Semana</th>
+              <th>Peso (%)</th>
+              <th>Avance (%)</th>
+              <th>Progreso</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-o2"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="table-card card" id="o3">
+      <h3 style="margin-top:0">Tabla 3. Actividades Objetivo 3.</h3>
+      <p><b>Objetivo 3.</b> Dimensionar los equipos del proceso y establecer los criterios de escalado, con el fin de proyectar la viabilidad técnica del proceso a escala piloto a partir de los resultados obtenidos en escala de laboratorio.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Actividad</th>
+              <th>Descripción</th>
+              <th>Semana</th>
+              <th>Peso (%)</th>
+              <th>Avance (%)</th>
+              <th>Progreso</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-o3"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="table-card card" id="o4">
+      <h3 style="margin-top:0">Tabla 4. Actividades Objetivo 4.</h3>
+      <p><b>Objetivo 4.</b> Establecer la pre-factibilidad financiera del proyecto.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Actividad</th>
+              <th>Descripción</th>
+              <th>Semana</th>
+              <th>Peso (%)</th>
+              <th>Avance (%)</th>
+              <th>Progreso</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-o4"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="footer">Hecho con HTML + CSS + JS (sin librerías externas). Tus avances se guardan en <i>localStorage</i> del navegador.</p>
+  </div>
+
+<script>
+// ====== Datos del tablero ======
+const objetivos = [
+  {id:'o1', nombre:'Objetivo 1', pesoProyecto:20, actividades:[
+    {cod:'1.1', semana:'1–3', peso:25, desc:'Búsqueda de bibliografía científica sobre la producción de obtención de bioetanol a partir de microalgas.'},
+    {cod:'1.2', semana:'1–3', peso:25, desc:'Identificar la metodología más apropiada y los recursos (materiales y equipos) necesarios para el proceso.'},
+    {cod:'1.3', semana:'4',   peso:15, desc:'Definir problemática, objetivos, antecedentes, metodología y entregables del proyecto.'},
+    {cod:'1.4', semana:'5',   peso:10, desc:'Establecer un cronograma preliminar de la ejecución del proyecto.'},
+    {cod:'1.5', semana:'5',   peso:10, desc:'Estimar presupuesto para una corrida experimental.'},
+    {cod:'1.6', semana:'1–14',peso:15, desc:'Organizar reuniones periódicas de coordinación y revisión de desempeño con el equipo y asesor para seguimiento del proyecto.'}
+  ]},
+  {id:'o2', nombre:'Objetivo 2', pesoProyecto:35, actividades:[
+    {cod:'2.1', semana:'7',    peso:10, desc:'Realizar diagrama de bloques del proceso.'},
+    {cod:'2.2', semana:'8–10', peso:45, desc:'Ejecutar metodología de laboratorio de hidrólisis y fermentación de <i>C. vulgaris</i> para obtener bioetanol.'},
+    {cod:'2.3', semana:'11–12',peso:25, desc:'Realizar balances de masa y energía de la hidrólisis y fermentación.'},
+    {cod:'2.4', semana:'11–12',peso:20, desc:'Determinar los requerimientos energéticos de los equipos involucrados en el proceso.'}
+  ]},
+  {id:'o3', nombre:'Objetivo 3', pesoProyecto:25, actividades:[
+    {cod:'3.1', semana:'12–13',peso:15, desc:'Establecer la capacidad de producción objetivo de la planta piloto.'},
+    {cod:'3.2', semana:'12–13',peso:15, desc:'Identificar los equipos requeridos para el proceso a escala piloto.'},
+    {cod:'3.3', semana:'12–13',peso:40, desc:'Dimensionar los equipos seleccionados según parámetros de operación.'},
+    {cod:'3.4', semana:'12–13',peso:30, desc:'Diseñar diagrama P&ID preliminar que represente la interconexión de los equipos, los flujos de proceso y los puntos de control.'}
+  ]},
+  {id:'o4', nombre:'Objetivo 4', pesoProyecto:20, actividades:[
+    {cod:'4.1', semana:'14',   peso:20, desc:'Realizar estudio de mercado: Demanda local/regional de bioetanol, precios históricos y competidores.'},
+    {cod:'4.2', semana:'14–15',peso:25, desc:'Estimar los costos de materias primas, reactivos y equipos, y determinar el costo unitario de producción ($/L de bioetanol).'},
+    {cod:'4.3', semana:'14–15',peso:30, desc:'Realizar flujo de caja proyectado a 5–10 años y calcular indicadores financieros (VPN, TIR, periodo de recuperación).'},
+    {cod:'4.4', semana:'15',   peso:15, desc:'Analizar escenarios económicos (optimista, base, pesimista).'},
+    {cod:'4.5', semana:'12–15',peso:10, desc:'Preparar un informe final.'}
+  ]}
+];
+
+// ====== Utilidades ======
+const key = 'avance-bioetanol-v1';
+function loadState(){ try{ return JSON.parse(localStorage.getItem(key))||{} }catch{ return {} } }
+function saveState(state){ localStorage.setItem(key, JSON.stringify(state)); }
+const state = loadState();
+
+function clamp(v){ v = Number(v||0); if(isNaN(v)) v=0; return Math.max(0, Math.min(100, v)); }
+
+// ====== Gestión de fechas ======
+function formatDate(date){
+  const d = new Date(date);
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${d.getDate()} ${months[d.getMonth()]}`;
+}
+
+function addWeeks(date, weeks){
+  const result = new Date(date);
+  result.setDate(result.getDate() + (weeks * 7));
+  return result;
+}
+
+function updateWeekDates(){
+  const startInput = document.getElementById('startDate');
+  const weekDatesDiv = document.getElementById('weekDates');
+  
+  if(!startInput.value){
+    weekDatesDiv.innerHTML = '<i>Ingresa una fecha de inicio para ver el timeline de semanas</i>';
+    return;
+  }
+  
+  const startDate = new Date(startInput.value + 'T00:00:00');
+  let html = '<b>Timeline de semanas:</b><br>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px">';
+  
+  for(let i = 1; i <= 15; i++){
+    const weekStart = addWeeks(startDate, i - 1);
+    const weekEnd = addWeeks(startDate, i);
+    weekEnd.setDate(weekEnd.getDate() - 1);
+    html += `<span style="padding:4px 8px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px">
+      <b>S${i}:</b> ${formatDate(weekStart)} - ${formatDate(weekEnd)}
+    </span>`;
+  }
+  
+  html += '</div>';
+  weekDatesDiv.innerHTML = html;
+  
+  // Guardar fecha de inicio
+  state.startDate = startInput.value;
+  saveState(state);
+  
+  drawCurvaS();
+}
+
+function initDatePicker(){
+  const startInput = document.getElementById('startDate');
+  const currentWeekInput = document.getElementById('currentWeek');
+  
+  // Cargar fecha guardada
+  if(state.startDate){
+    startInput.value = state.startDate;
+    updateWeekDates();
+  }
+  
+  if(state.currentWeek !== undefined){
+    currentWeekInput.value = state.currentWeek;
+  }
+  
+  startInput.addEventListener('change', updateWeekDates);
+  currentWeekInput.addEventListener('change', ()=>{
+    state.currentWeek = parseInt(currentWeekInput.value) || 0;
+    saveState(state);
+    drawCurvaS();
+  });
+}
+
+// ====== Mapeo de actividades a semanas ======
+function parseWeeks(str){
+  if(str.includes('–')){
+    const parts = str.split('–');
+    return {start: parseInt(parts[0]), end: parseInt(parts[1])};
+  }
+  const w = parseInt(str);
+  return {start: w, end: w};
+}
+
+// ====== Curva S ======
+function drawCurvaS(){
+  const canvas = document.getElementById('curvaS');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  
+  ctx.clearRect(0, 0, w, h);
+  
+  // Márgenes
+  const ml = 60, mr = 20, mt = 20, mb = 60;
+  const gw = w - ml - mr;
+  const gh = h - mt - mb;
+  
+  // Calcular curva planificada (distribución uniforme ideal)
+  const planned = [];
+  let cumulative = 0;
+  const totalWeight = 100;
+  
+  // Distribuir actividades por semana
+  const weeklyPlanned = Array(16).fill(0);
+  objetivos.forEach(obj => {
+    obj.actividades.forEach(act => {
+      const weeks = parseWeeks(act.semana);
+      const duration = weeks.end - weeks.start + 1;
+      const weightPerWeek = (act.peso * obj.pesoProyecto / 100) / duration;
+      for(let w = weeks.start; w <= weeks.end; w++){
+        weeklyPlanned[w] += weightPerWeek;
+      }
+    });
+  });
+  
+  planned.push(0);
+  for(let i = 1; i <= 15; i++){
+    cumulative += weeklyPlanned[i];
+    planned.push(cumulative);
+  }
+  
+  // Calcular curva real
+  const actual = [];
+  const weeklyActual = Array(16).fill(0);
+  
+  objetivos.forEach(obj => {
+    obj.actividades.forEach(act => {
+      const weeks = parseWeeks(act.semana);
+      const progress = clamp(state[obj.id]?.[act.cod]) / 100;
+      const duration = weeks.end - weeks.start + 1;
+      const weightPerWeek = (act.peso * obj.pesoProyecto / 100 * progress) / duration;
+      for(let w = weeks.start; w <= weeks.end; w++){
+        weeklyActual[w] += weightPerWeek;
+      }
+    });
+  });
+  
+  let actualCum = 0;
+  actual.push(0);
+  for(let i = 1; i <= 15; i++){
+    actualCum += weeklyActual[i];
+    actual.push(actualCum);
+  }
+  
+  // Dibujar ejes
+  ctx.strokeStyle = '#dee2e6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(ml, mt);
+  ctx.lineTo(ml, mt + gh);
+  ctx.lineTo(ml + gw, mt + gh);
+  ctx.stroke();
+  
+  // Etiquetas eje Y
+  ctx.fillStyle = '#6c757d';
+  ctx.font = '12px Times New Roman';
+  ctx.textAlign = 'right';
+  for(let i = 0; i <= 10; i++){
+    const y = mt + gh - (i * gh / 10);
+    const val = i * 10;
+    ctx.fillText(val + '%', ml - 10, y + 4);
+    
+    // Líneas guía
+    ctx.strokeStyle = '#f8f9fa';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(ml, y);
+    ctx.lineTo(ml + gw, y);
+    ctx.stroke();
+  }
+  
+  // Etiquetas eje X con fechas si están disponibles
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#6c757d';
+  const startDateStr = state.startDate;
+  const startDate = startDateStr ? new Date(startDateStr + 'T00:00:00') : null;
+  
+  for(let i = 0; i <= 15; i++){
+    const x = ml + (i * gw / 15);
+    if(i % 3 === 0){
+      ctx.fillText('S' + i, x, mt + gh + 20);
+      if(startDate && i > 0){
+        const weekStart = addWeeks(startDate, i - 1);
+        ctx.font = '10px Times New Roman';
+        ctx.fillText(formatDate(weekStart), x, mt + gh + 35);
+        ctx.font = '12px Times New Roman';
+      }
+    }
+  }
+  
+  // Línea vertical de semana actual
+  const currentWeek = state.currentWeek || 0;
+  if(currentWeek > 0 && currentWeek <= 15){
+    const x = ml + (currentWeek * gw / 15);
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x, mt);
+    ctx.lineTo(x, mt + gh);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Etiqueta "Semana actual"
+    ctx.fillStyle = '#ffd166';
+    ctx.font = 'bold 11px Times New Roman';
+    ctx.fillText('Semana actual', x, mt - 5);
+    ctx.font = '12px Times New Roman';
+  }
+  
+  // Dibujar curva planificada
+  ctx.strokeStyle = '#0066cc';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  for(let i = 0; i <= 15; i++){
+    const x = ml + (i * gw / 15);
+    const y = mt + gh - (planned[i] * gh / 100);
+    if(i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Dibujar curva real
+  ctx.strokeStyle = '#00b894';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for(let i = 0; i <= 15; i++){
+    const x = ml + (i * gw / 15);
+    const y = mt + gh - (actual[i] * gh / 100);
+    if(i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  
+  // Leyenda
+  const ly = mt + 10;
+  ctx.fillStyle = '#0066cc';
+  ctx.fillRect(ml + gw - 200, ly, 30, 3);
+  ctx.fillStyle = '#6c757d';
+  ctx.textAlign = 'left';
+  ctx.font = '12px Times New Roman';
+  ctx.fillText('Planificado', ml + gw - 165, ly + 4);
+  
+  ctx.fillStyle = '#00b894';
+  ctx.fillRect(ml + gw - 200, ly + 20, 30, 3);
+  ctx.fillStyle = '#6c757d';
+  ctx.fillText('Real', ml + gw - 165, ly + 24);
+}
+
+// ====== Render de tablas ======
+function tr(act, objId){
+  const saved = state[objId]?.[act.cod] ?? '';
+  return `<tr>
+    <td><b>${act.cod}</b></td>
+    <td>${act.desc}</td>
+    <td class="w-week">${act.semana}</td>
+    <td class="weight">${act.peso}%</td>
+    <td><input type="number" min="0" max="100" step="1" value="${saved}" data-obj="${objId}" data-cod="${act.cod}" aria-label="Avance ${act.cod}"></td>
+    <td><div class="row-progress"><div class="mini"><span id="mini-${objId}-${act.cod}" style="width:${clamp(saved)}%"></span></div><small class="pct" id="txt-${objId}-${act.cod}">${clamp(saved)}%</small></div></td>
+  </tr>`;
+}
+
+function render(){
+  objetivos.forEach(o=>{
+    const tbody = document.getElementById('tbody-'+o.id);
+    tbody.innerHTML = o.actividades.map(a=>tr(a,o.id)).join('');
+  });
+  bindInputs();
+  recalcAll();
+  drawCurvaS();
+}
+
+function bindInputs(){
+  document.querySelectorAll('input[type="number"]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      inp.value = inp.value.replace(/[^0-9.]/g,'');
+      const v = clamp(inp.value);
+      const obj = inp.dataset.obj, cod = inp.dataset.cod;
+      state[obj] = state[obj] || {}; state[obj][cod]=v;
+      document.getElementById(`mini-${obj}-${cod}`).style.width = v+"%";
+      document.getElementById(`txt-${obj}-${cod}`).textContent = v+"%";
+      recalcAll();
+      drawCurvaS();
+    });
+  });
+}
+
+// ====== Cálculo de resumen ======
+function avanceObjetivo(obj){
+  const o = objetivos.find(x=>x.id===obj);
+  let sum = 0;
+  o.actividades.forEach(a=>{ const av = clamp(state[obj]?.[a.cod]); sum += av * (a.peso/100); });
+  return +(sum).toFixed(2);
+}
+
+function recalcAll(){
+  const summary = document.getElementById('summary');
+  summary.innerHTML = '';
+  let total = 0;
+  objetivos.forEach(o=>{
+    const av = avanceObjetivo(o.id);
+    const contrib = av * (o.pesoProyecto/100);
+    total += contrib;
+    const el = document.createElement('div');
+    el.className='summary-item';
+    el.innerHTML = `
+      <div class="summary-head"><span><b>${o.nombre}</b></span><span class="pct">${av}%</span></div>
+      <div class="bar"><span style="width:${av}%"></span></div>
+      <div class="legend" style="margin-top:10px">
+        <span class="pill">Peso en proyecto: <b>${o.pesoProyecto}%</b></span>
+        <span class="pill">Contribución actual: <b>${contrib.toFixed(2)}%</b></span>
+      </div>`;
+    summary.appendChild(el);
+  });
+  document.getElementById('overallBar').style.width = total+'%';
+  document.getElementById('overallPct').textContent = total.toFixed(1)+'%';
+  document.getElementById('overallRing').style.setProperty('--pct', total+'%');
+}
+
+// ====== Botones ======
+const btnSave = document.getElementById('save');
+const btnReset = document.getElementById('reset');
+const btnPrint = document.getElementById('print');
+
+btnSave.addEventListener('click', ()=>{ saveState(state); btnSave.textContent='Guardado ✓'; setTimeout(()=>btnSave.textContent='Guardar',1200); });
+btnReset.addEventListener('click', ()=>{
+  if(confirm('¿Reiniciar todos los avances a 0%?')){
+    Object.keys(state).forEach(k=>delete state[k]);
+    localStorage.removeItem(key);
+    render();
+  }
+});
+btnPrint?.addEventListener('click', ()=>window.print());
+
+// init
+initDatePicker();
+render();
+</script>
+</body>
+</html>
