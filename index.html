@@ -10,6 +10,25 @@
       --warning:#ffd166; --danger:#ff6b6b; --ok:#4ade80; --bar:#e9ecef; --shadow:0 2px 8px rgba(0,0,0,.08);
       --radius:12px;
     }
+    body.dark-theme{
+      --bg:#1a1a1a; --card:#2d3748; --ink:#ffffff; --muted:#a0aec0; --bar:#4a5568; --shadow:0 2px 8px rgba(0,0,0,.3);
+    }
+    body.dark-theme .card{background:var(--card);color:var(--ink)}
+    body.dark-theme .summary-item{background:var(--card);border-color:#4a5568}
+    body.dark-theme .table-card table{background:var(--card)}
+    body.dark-theme thead th{background:var(--card);border-color:#4a5568}
+    body.dark-theme tbody tr:nth-child(even){background:var(--card)}
+    body.dark-theme tbody tr:nth-child(odd){background:#374151}
+    body.dark-theme tbody tr:hover{background:#4a5568}
+    body.dark-theme .chart-container{background:var(--card)}
+    body.dark-theme .advance-delay-info{background:var(--card);border-color:#4a5568}
+    body.dark-theme .pill{background:#4a5568;border-color:#718096}
+    body.dark-theme input[type="number"]{background:var(--card);border-color:#4a5568;color:var(--ink)}
+    body.dark-theme select{background:var(--card);border-color:#4a5568;color:var(--ink)}
+    body.dark-theme input[type="date"]{background:var(--card);border-color:#4a5568;color:var(--ink)}
+    body.dark-theme button{background:var(--card);border-color:#4a5568;color:var(--ink)}
+    body.dark-theme button:hover{background:#4a5568;border-color:var(--primary)}
+    body.dark-theme .secondary{background:#4a5568}
     *{box-sizing:border-box}
     html,body{margin:0;background:#ffffff;color:var(--ink);font-family:"Times New Roman", Times, serif;}
     .wrap{max-width:1200px;margin:24px auto;padding:0 16px 64px}
@@ -57,12 +76,38 @@
     .chart-container{margin-top:20px;padding:20px;background:#f8f9fa;border-radius:10px;border:1px solid #dee2e6}
     .chart-title{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--ink)}
     canvas{max-width:100%;height:auto}
+    .advance-delay-info{background:#ffffff;border:1px solid #dee2e6;border-radius:6px;padding:8px;margin-bottom:12px;font-size:14px}
+    .advance-delay-info strong{color:var(--ink)}
     .toast{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:9999;max-width:360px;font-size:13px}
     .toast .t{background:#ffffff;border:1px solid #dee2e6;border-left:6px solid var(--primary);padding:10px 12px;border-radius:10px;box-shadow:var(--shadow)}
     .t.ok{border-left-color:var(--ok)} .t.warn{border-left-color:var(--warning)} .t.err{border-left-color:var(--danger)}
     .right-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
     .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
     .switch input{accent-color:var(--primary)}
+    .theme-toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+    .theme-toggle button{padding:6px 12px;border:1px solid #dee2e6;background:#ffffff;color:var(--ink);border-radius:6px;cursor:pointer}
+    .theme-toggle button:hover{background:#f8f9fa}
+    .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid #dee2e6}
+    .tab-btn{padding:10px 20px;border:1px solid #dee2e6;border-bottom:none;background:#f8f9fa;color:var(--ink);cursor:pointer;border-radius:6px 6px 0 0;font-weight:600}
+    .tab-btn.active{background:#ffffff;border-bottom:1px solid #ffffff}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .week-summary{margin-top:20px}
+    .week-card{background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:16px;margin-bottom:12px}
+    .week-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .week-title{font-weight:700;color:var(--ink)}
+    .week-status{padding:4px 8px;border-radius:4px;font-size:12px;font-weight:600}
+    .week-status.current{background:#ffd166;color:#000}
+    .week-status.completed{background:#00b894;color:#fff}
+    .week-status.pending{background:#6c757d;color:#fff}
+    .task-list{list-style:none;padding:0;margin:0}
+    .task-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #e9ecef}
+    .task-item:last-child{border-bottom:none}
+    .task-checkbox{width:16px;height:16px;border:1px solid #ced4da;border-radius:3px;background:#fff}
+    .task-checkbox.checked{background:#00b894;border-color:#00b894}
+    .task-name{flex:1;font-size:14px}
+    .task-objective{color:#6c757d;font-size:12px;margin-left:8px}
+    .task-weight{font-weight:600;color:#0066cc}
   </style>
 </head>
 <body>
@@ -78,6 +123,9 @@
         <div class="switch">
           <input type="checkbox" id="autosync">
           <label for="autosync"><b>Autosync</b> (JSONBin)</label>
+        </div>
+        <div class="theme-toggle">
+          <button id="themeBtn" title="Cambiar tema">Tema Claro</button>
         </div>
         <button id="pull" title="Traer desde la nube">Sync ↓</button>
         <button id="push" title="Enviar a la nube">Sync ↑</button>
@@ -101,45 +149,73 @@
             <option value="10">Semana 10</option><option value="11">Semana 11</option>
           </select>
         </div>
+        <div>
+          <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px"><b>Fecha actual</b></label>
+          <input type="date" id="currentDate" style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:6px;font-family:'Times New Roman',serif">
+        </div>
       </div>
       <div id="weekDates" style="font-size:12px;color:var(--muted);line-height:1.8"></div>
     </section>
-    <div class="grid">
-      <section class="card">
-        <h2 style="margin-top:0">Resumen de progreso</h2>
-        <div class="progress-summary" id="summary"></div>
-        <div class="tools">
-          <button id="save">Guardar local</button>
-          <button id="reset">Reiniciar avances</button>
-          <button id="print" class="secondary">Imprimir / PDF</button>
-        </div>
-        <p class="note">Consejo: escribe únicamente números entre 0 y 100 en la columna <b>Avance (%)</b>. El tablero calcula el avance de cada objetivo y del proyecto con base en los pesos definidos.</p>
-      </section>
-      <aside class="side">
-        <div class="card" id="overallCard">
-          <div class="ring" id="overallRing" style="--pct:0%"><b id="overallPct">0%</b></div>
-          <div>
-            <h3 style="margin:.2rem 0 6px">Avance total del proyecto</h3>
-            <div class="bar"><span id="overallBar" style="width:0%"></span></div>
-            <p class="note" style="margin:.6rem 0 0">Pondera el avance de cada objetivo por su peso en el proyecto.</p>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="planning">Planificación</button>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-content active">
+      <div class="grid">
+        <section class="card">
+          <h2 style="margin-top:0">Resumen de progreso</h2>
+          <div class="progress-summary" id="summary"></div>
+          <div class="tools">
+            <button id="save">Guardar local</button>
+            <button id="reset">Reiniciar avances</button>
+            <button id="export">Exportar datos</button>
+            <button id="print" class="secondary">Imprimir / PDF</button>
           </div>
-        </div>
-        <div class="card">
-          <h3 style="margin-top:0">Pesos de los objetivos</h3>
-          <ul style="margin:0;padding-left:18px;line-height:1.6">
-            <li><b>Objetivo 1:</b> 20%</li>
-            <li><b>Objetivo 2:</b> 30%</li>
-            <li><b>Objetivo 3:</b> 30%</li>
-            <li><b>Objetivo 4:</b> 20%</li>
-          </ul>
-        </div>
-      </aside>
+          <p class="note">Consejo: escribe únicamente números entre 0 y 100 en la columna <b>Avance (%)</b>. El tablero calcula el avance de cada objetivo y del proyecto con base en los pesos definidos.</p>
+        </section>
+        <aside class="side">
+          <div class="card" id="overallCard">
+            <div class="ring" id="overallRing" style="--pct:0%"><b id="overallPct">0%</b></div>
+            <div>
+              <h3 style="margin:.2rem 0 6px">Avance total del proyecto</h3>
+              <div class="bar"><span id="overallBar" style="width:0%"></span></div>
+              <p class="note" style="margin:.6rem 0 0">Pondera el avance de cada objetivo por su peso en el proyecto.</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Pesos de los objetivos</h3>
+            <ul style="margin:0;padding-left:18px;line-height:1.6">
+              <li><b>Objetivo 1:</b> 20%</li>
+              <li><b>Objetivo 2:</b> 30%</li>
+              <li><b>Objetivo 3:</b> 30%</li>
+              <li><b>Objetivo 4:</b> 20%</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Planning Tab -->
+    <div id="planning" class="tab-content">
+      <div id="weekSummary"></div>
+      <div class="card" style="margin-top:20px">
+        <h3>Configuración de Objetivos y Actividades</h3>
+        <p>Edita los nombres, pesos y actividades de cada objetivo. Los cambios se guardan automáticamente.</p>
+        <div id="configContainer"></div>
+        <button id="addObjective" style="margin-top:16px">Agregar Objetivo</button>
+      </div>
     </div>
     <!-- Curva S -->
     <section class="card chart-container">
       <h3 class="chart-title">Curva S del Proyecto</h3>
+      <div class="advance-delay-info">
+        <strong>Estado del proyecto:</strong> <span id="advanceDelayText">Selecciona una semana actual para ver el avance/retraso</span>
+      </div>
       <canvas id="curvaS" width="800" height="300"></canvas>
-      <p class="note" style="margin-top:12px">La curva S muestra el avance acumulado planificado vs. el avance real del proyecto a lo largo de las 11 semanas.</p>
+      <p class="note" style="margin-top:12px">La curva S muestra el avance acumulado planificado vs. el avance real del proyecto a lo largo de las 11 semanas. El cálculo de avance/retraso se basa en la comparación del progreso real vs. planificado hasta la semana actual.</p>
     </section>
     <!-- Tablas -->
     <section class="table-card card" id="o1">
@@ -207,41 +283,42 @@ const BIN_ID = '68f0705eae596e708f16401f';
 const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 const MASTER_KEY = '$2a$10$HufXVv9iC6tHxgSD3dEwQeIMMgUAqVXMUxpSKBlxRqiroROL6OFc2';
 const USE_VERSIONING = false;
-// ====== Datos del tablero ======
-const objetivos = [
-  {id:'o1', nombre:'Objetivo 1', pesoProyecto:20, actividades:[
-    {cod:'1.1', semana:'1–3', peso:20, desc:'Actualización de antecedentes, metodología y entregables del proyecto.'},
-    {cod:'1.2', semana:'1', peso:20, desc:'Elaboración del cronograma final detallado de ejecución del proyecto.'},
-    {cod:'1.3', semana:'1–2', peso:15, desc:'Realizar cotizaciones de los reactivos, materiales y equipos requeridos para la corrida experimental.'},
-    {cod:'1.4', semana:'1–11', peso:45, desc:'Gestión y seguimiento semanal del cronograma (reuniones, ajustes, control de avance).'}
-  ]},
-  {id:'o2', nombre:'Objetivo 2', pesoProyecto:30, actividades:[
-    {cod:'2.1', semana:'1–2', peso:10, desc:'Elaboración del diagrama PFD (Process Flow Diagram) del proceso completo.'},
-    {cod:'2.2', semana:'2–4', peso:30, desc:'Ejecución experimental para obtención de bioetanol.'},
-    {cod:'2.3', semana:'4–5', peso:20, desc:'Realizar balance de masa del proceso.'},
-    {cod:'2.4', semana:'4–5', peso:20, desc:'Realizar balance de energía del proceso.'},
-    {cod:'2.5', semana:'6', peso:20, desc:'Presentación de resultados y entrega de cumplimiento del objetivo 2.'}
-  ]},
-  {id:'o3', nombre:'Objetivo 3', pesoProyecto:30, actividades:[
-    {cod:'3.1', semana:'6', peso:20, desc:'Definir la capacidad de producción según la demanda y requerimientos del mercado.'},
-    {cod:'3.2', semana:'6', peso:10, desc:'Identificar los equipos requeridos según la escala definida.'},
-    {cod:'3.3', semana:'7–8', peso:35, desc:'Dimensionar los equipos seleccionados según parámetros de operación.'},
-    {cod:'3.4', semana:'7–8', peso:25, desc:'Diseñar el diagrama P&ID del proceso con base en la escala productiva establecida.'},
-    {cod:'3.5', semana:'8', peso:10, desc:'Realizar el estudio de mercado: análisis de demanda, precios y competidores.'}
-  ]},
-  {id:'o4', nombre:'Objetivo 4', pesoProyecto:20, actividades:[
-    {cod:'4.1', semana:'9', peso:15, desc:'Estimar los costos de materias primas, reactivos y equipos.'},
-    {cod:'4.2', semana:'9', peso:15, desc:'Calcular el costo unitario de producción ($/L de bioetanol).'},
-    {cod:'4.3', semana:'9–10', peso:30, desc:'Elaborar flujo de caja proyectado y calcular indicadores financieros (VPN, TIR, periodo de recuperación).'},
-    {cod:'4.4', semana:'10', peso:15, desc:'Analizar escenarios financieros (optimista, base, pesimista).'},
-    {cod:'4.5', semana:'11',   peso:25, desc:'Preparar un informe final y presentación conjunta de los objetivos 3 y 4 (resultados técnicos y financieros).'}
-  ]}
-];
 // ====== Utilidades ======
 const key = 'avance-bioetanol-v1';
 function loadState(){ try{ return JSON.parse(localStorage.getItem(key))||{} }catch{ return {} } }
 function saveStateLocal(state){ localStorage.setItem(key, JSON.stringify(state)); }
 const state = loadState();
+// ====== Datos del tablero ======
+const defaultObjetivos = [
+  {id:'o1', nombre:'Objetivo 1', pesoProyecto:20, actividades:[
+    {cod:'1.1', semana:'2–5', peso:20, desc:'Actualización de antecedentes, metodología y entregables del proyecto.'},
+    {cod:'1.2', semana:'1–3', peso:20, desc:'Elaboración del cronograma final detallado de ejecución del proyecto.'},
+    {cod:'1.3', semana:'1–3', peso:15, desc:'Realizar cotizaciones de los reactivos, materiales y equipos requeridos para la corrida experimental.'},
+    {cod:'1.4', semana:'1–10', peso:45, desc:'Gestión y seguimiento semanal del cronograma (reuniones, ajustes, control de avance).'}
+  ]},
+  {id:'o2', nombre:'Objetivo 2', pesoProyecto:30, actividades:[
+    {cod:'2.1', semana:'2–3', peso:10, desc:'Elaboración del diagrama PFD (Process Flow Diagram) del proceso completo.'},
+    {cod:'2.2', semana:'2–5', peso:30, desc:'Ejecución experimental para obtención de bioetanol.'},
+    {cod:'2.3', semana:'5–6', peso:20, desc:'Realizar balance de masa del proceso.'},
+    {cod:'2.4', semana:'5–6', peso:20, desc:'Realizar balance de energía del proceso.'},
+    {cod:'2.5', semana:'7', peso:20, desc:'Presentación de resultados y entrega de cumplimiento del objetivo 2.'}
+  ]},
+  {id:'o3', nombre:'Objetivo 3', pesoProyecto:30, actividades:[
+    {cod:'3.1', semana:'5–6', peso:20, desc:'Definir la capacidad de producción según la demanda y requerimientos del mercado.'},
+    {cod:'3.2', semana:'5–6', peso:10, desc:'Identificar los equipos requeridos según la escala definida.'},
+    {cod:'3.3', semana:'7–10', peso:35, desc:'Dimensionar los equipos seleccionados según parámetros de operación.'},
+    {cod:'3.4', semana:'7–8', peso:25, desc:'Diseñar el diagrama P&ID del proceso con base en la escala productiva establecida.'},
+    {cod:'3.5', semana:'5–6', peso:10, desc:'Realizar el estudio de mercado: análisis de demanda, precios y competidores.'}
+  ]},
+  {id:'o4', nombre:'Objetivo 4', pesoProyecto:20, actividades:[
+    {cod:'4.1', semana:'8–10', peso:15, desc:'Estimar los costos de materias primas, reactivos y equipos.'},
+    {cod:'4.2', semana:'8–10', peso:15, desc:'Calcular el costo unitario de producción ($/L de bioetanol).'},
+    {cod:'4.3', semana:'8–10', peso:30, desc:'Elaborar flujo de caja proyectado y calcular indicadores financieros (VPN, TIR, periodo de recuperación).'},
+    {cod:'4.4', semana:'10', peso:15, desc:'Analizar escenarios financieros (optimista, base, pesimista).'},
+    {cod:'4.5', semana:'11', peso:25, desc:'Informe final y presentación conjunta de los objetivos 3 y 4 (resultados técnicos y financieros).'}
+  ]}
+];
+const objetivos = state.objetivos || defaultObjetivos;
 function clamp(v){ v = Number(v||0); if(isNaN(v)) v=0; return Math.max(0, Math.min(100, v)); }
 function toast(msg, type='ok', ms=2500){
   const box = document.getElementById('toast');
@@ -264,14 +341,20 @@ function updateWeekDates(){
   weekDatesDiv.innerHTML=html+'</div>'; state.startDate=startInput.value; markTouched(); drawCurvaS(); saveNowMaybe();
 }
 function initDatePicker(){
-  const startInput=document.getElementById('startDate'); const currentWeekInput=document.getElementById('currentWeek');
+  const startInput=document.getElementById('startDate'); const currentWeekInput=document.getElementById('currentWeek'); const currentDateInput=document.getElementById('currentDate');
   if(state.startDate){ startInput.value=state.startDate; updateWeekDates(); }
   if(state.currentWeek!==undefined){ currentWeekInput.value=state.currentWeek; }
+  if(state.currentDate){ currentDateInput.value=state.currentDate; } else { currentDateInput.value=new Date().toISOString().split('T')[0]; state.currentDate=currentDateInput.value; }
   startInput.addEventListener('change', updateWeekDates);
   currentWeekInput.addEventListener('change', ()=>{ state.currentWeek=parseInt(currentWeekInput.value)||0; markTouched(); drawCurvaS(); saveNowMaybe(); });
+  currentDateInput.addEventListener('change', ()=>{ state.currentDate=currentDateInput.value; markTouched(); drawCurvaS(); renderWeekPlanning(); saveNowMaybe(); });
 }
 // ====== Curva S ======
-function parseWeeks(str){ if(str.includes('–')){ const p=str.split('–'); return {start:+p[0], end:+p[1]}; } const w=+str; return {start:w,end:w}; }
+function parseWeeks(str){
+  if(typeof str !== 'string') return {start:1, end:1}; // fallback
+  if(str.includes('–')){ const p=str.split('–'); return {start:+p[0], end:+p[1]}; }
+  const w=+str; return {start:w,end:w};
+}
 function drawCurvaS(){
   const c=document.getElementById('curvaS'),ctx=c.getContext('2d'),w=c.width,h=c.height; ctx.clearRect(0,0,w,h);
   const ml=60,mr=20,mt=20,mb=60,gw=w-ml-mr,gh=h-mt-mb;
@@ -294,6 +377,96 @@ function drawCurvaS(){
   for(let i=0;i<=11;i++){ const x=ml+(i*gw/11),y=mt+gh-(actual[i]*gh/100); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); } ctx.stroke();
   const ly=mt+10; ctx.fillStyle='#0066cc'; ctx.fillRect(ml+gw-200,ly,30,3); ctx.fillStyle='#6c757d'; ctx.textAlign='left'; ctx.font='12px Times New Roman'; ctx.fillText('Planificado',ml+gw-165,ly+4);
   ctx.fillStyle='#00b894'; ctx.fillRect(ml+gw-200,ly+20,30,3); ctx.fillStyle='#6c757d'; ctx.fillText('Real',ml+gw-165,ly+24);
+
+  // Tooltip functionality
+  let tooltip = null;
+  function showTooltip(e, week, plannedPct, actualPct) {
+    if (tooltip) tooltip.remove();
+    const variance = actualPct - plannedPct;
+    const status = variance > 0 ? 'Adelantado' : variance < 0 ? 'Retrasado' : 'En tiempo';
+    const color = variance > 0 ? '#00b894' : variance < 0 ? '#ff6b6b' : '#ffd166';
+    tooltip = document.createElement('div');
+    tooltip.style.position = 'absolute';
+    tooltip.style.left = e.pageX + 10 + 'px';
+    tooltip.style.top = e.pageY - 10 + 'px';
+    tooltip.style.background = 'rgba(0,0,0,0.8)';
+    tooltip.style.color = 'white';
+    tooltip.style.padding = '8px 12px';
+    tooltip.style.borderRadius = '6px';
+    tooltip.style.fontSize = '12px';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.zIndex = '1000';
+    tooltip.innerHTML = `
+      <strong>Semana ${week}</strong><br>
+      Planificado: ${plannedPct.toFixed(1)}%<br>
+      Real: ${actualPct.toFixed(1)}%<br>
+      <span style="color:${color}">${status}: ${Math.abs(variance).toFixed(1)}%</span>
+    `;
+    document.body.appendChild(tooltip);
+  }
+
+  function hideTooltip() {
+    if (tooltip) {
+      tooltip.remove();
+      tooltip = null;
+    }
+  }
+
+  c.addEventListener('mousemove', function(e) {
+    const rect = c.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Check if mouse is over chart area
+    if (x >= ml && x <= ml + gw && y >= mt && y <= mt + gh) {
+      const weekIndex = Math.round((x - ml) / gw * 11);
+      if (weekIndex >= 0 && weekIndex <= 11) {
+        showTooltip(e, weekIndex, planned[weekIndex], actual[weekIndex]);
+      }
+    } else {
+      hideTooltip();
+    }
+  });
+
+  c.addEventListener('mouseleave', hideTooltip);
+
+  // Calculate advance/delay based on actual date
+  const currentDate = state.currentDate ? new Date(state.currentDate + 'T00:00:00') : new Date();
+  const startDate = state.startDate ? new Date(state.startDate + 'T00:00:00') : null;
+
+  let calculatedWeek = cw; // Default to manual selection
+  if (startDate) {
+    const diffTime = currentDate.getTime() - startDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const calculatedWeekFromDate = Math.floor(diffDays / 7) + 1;
+    calculatedWeek = Math.max(1, Math.min(11, calculatedWeekFromDate)); // Clamp between 1-11
+  }
+
+  const advanceDelayEl = document.getElementById('advanceDelayText');
+  if(calculatedWeek > 0 && calculatedWeek <= 11){
+    const plannedAtCurrent = planned[calculatedWeek];
+    const actualAtCurrent = actual[calculatedWeek];
+    const variance = actualAtCurrent - plannedAtCurrent;
+    const status = variance > 0 ? 'Adelantado' : variance < 0 ? 'Retrasado' : 'En tiempo';
+    const color = variance > 0 ? '#00b894' : variance < 0 ? '#ff6b6b' : '#ffd166';
+    const text = `${status} por ${Math.abs(variance).toFixed(1)}% (Semana ${calculatedWeek} - Planificado: ${plannedAtCurrent.toFixed(1)}%, Real: ${actualAtCurrent.toFixed(1)}%)`;
+    advanceDelayEl.textContent = text;
+    advanceDelayEl.style.color = color;
+    ctx.fillStyle=color; ctx.font='bold 14px Times New Roman'; ctx.textAlign='left';
+    ctx.fillText(`${status}: ${Math.abs(variance).toFixed(1)}%`, ml+10, mt+30);
+  } else {
+    advanceDelayEl.textContent = 'Configura fecha de inicio y actual para ver el avance/retraso';
+    advanceDelayEl.style.color = '#6c757d';
+  }
+
+  // Debug: Add console logs to verify calculation
+  if(calculatedWeek > 0 && calculatedWeek <= 11){
+    console.log('DEBUG - Calculated Week from date:', calculatedWeek);
+    console.log('DEBUG - Manual Week selection:', cw);
+    console.log('DEBUG - Planned at current:', planned[calculatedWeek]);
+    console.log('DEBUG - Actual at current:', actual[calculatedWeek]);
+    console.log('DEBUG - Variance:', actual[calculatedWeek] - planned[calculatedWeek]);
+  }
 }
 // ====== Render tablas ======
 function tr(act,objId){
@@ -319,7 +492,7 @@ function bindInputs(){
       const obj=inp.dataset.obj,cod=inp.dataset.cod; state[obj]=state[obj]||{}; state[obj][cod]=v;
       document.getElementById(`mini-${obj}-${cod}`).style.width=v+"%";
       document.getElementById(`txt-${obj}-${cod}`).textContent=v+"%";
-      markTouched(); recalcAll(); drawCurvaS(); saveNowMaybe();
+      markTouched(); recalcAll(); drawCurvaS(); renderWeekPlanning(); saveNowMaybe();
     });
   });
 }
@@ -355,6 +528,19 @@ document.getElementById('reset').addEventListener('click', ()=>{
   }
 });
 document.getElementById('print')?.addEventListener('click', ()=>window.print());
+document.getElementById('export')?.addEventListener('click', ()=>{
+  const data = { objetivos, state, timestamp: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tablero-bioetanol-export.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Datos exportados como JSON','ok');
+});
 // ====== Sync JSONBin ======
 const autosyncEl=document.getElementById('autosync');
 const btnPull=document.getElementById('pull');
@@ -411,8 +597,245 @@ async function pushToCloud(showErrors=false){
     if(showErrors) toast('Error al escribir JSONBin: '+err.message,'err',4000); return false;
   }
 }
+// ====== Tema ======
+function toggleTheme(){
+  const body = document.body;
+  const btn = document.getElementById('themeBtn');
+  if(body.classList.contains('dark-theme')){
+    body.classList.remove('dark-theme');
+    btn.textContent = 'Tema Claro';
+    state.theme = 'light';
+  } else {
+    body.classList.add('dark-theme');
+    btn.textContent = 'Tema Oscuro';
+    state.theme = 'dark';
+  }
+  persistLocal();
+}
+document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+if(state.theme === 'dark'){ document.body.classList.add('dark-theme'); document.getElementById('themeBtn').textContent = 'Tema Oscuro'; }
+
+// ====== Tabs functionality ======
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ====== Week planning view ======
+function renderWeekPlanning(){
+  const container = document.getElementById('weekSummary');
+  const currentDate = state.currentDate ? new Date(state.currentDate + 'T00:00:00') : new Date();
+  const startDate = state.startDate ? new Date(state.startDate + 'T00:00:00') : null;
+
+  if (!startDate) {
+    container.innerHTML = '<div class="card"><p>Configura la fecha de inicio para ver la planificación por semanas.</p></div>';
+    return;
+  }
+
+  const diffTime = currentDate.getTime() - startDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const currentWeek = Math.max(1, Math.min(11, Math.floor(diffDays / 7) + 1));
+
+  let html = '';
+
+  for (let week = 1; week <= 11; week++) {
+    const weekStart = addWeeks(startDate, week - 1);
+    const weekEnd = addWeeks(startDate, week);
+    weekEnd.setDate(weekEnd.getDate() - 1);
+
+    let status = 'pending';
+    let statusText = 'Pendiente';
+    if (week < currentWeek) {
+      status = 'completed';
+      statusText = 'Completada';
+    } else if (week === currentWeek) {
+      status = 'current';
+      statusText = 'Actual';
+    }
+
+    html += `
+      <div class="week-card">
+        <div class="week-header">
+          <div class="week-title">Semana ${week}</div>
+          <div class="week-status ${status}">${statusText}</div>
+        </div>
+        <div style="font-size:12px;color:#6c757d;margin-bottom:12px">
+          ${formatDate(weekStart)} - ${formatDate(weekEnd)}
+        </div>
+        <ul class="task-list">
+    `;
+
+    objetivos.forEach(obj => {
+      obj.actividades.forEach(act => {
+        const ws = parseWeeks(act.semana);
+        if (ws.start <= week && ws.end >= week) {
+          const progress = clamp(state[obj.id]?.[act.cod] || 0);
+          const isCompleted = progress >= 100;
+          const isCurrent = week === currentWeek;
+          const remaining = 100 - progress;
+
+          html += `
+            <li class="task-item">
+              <div class="task-name">${act.cod}: ${act.desc}</div>
+              <div class="task-objective">${obj.nombre}</div>
+              <div class="task-weight">${act.peso}%</div>
+              ${isCurrent ? `<div style="color:#0066cc;font-weight:600">${progress}% ${remaining > 0 ? `(Faltan ${remaining}%)` : ''}</div>` : ''}
+            </li>
+          `;
+        }
+      });
+    });
+
+    html += `
+        </ul>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+
+}
+
+// ====== Configuration ======
+function renderConfig(){
+  const container = document.getElementById('configContainer');
+  let html = '';
+
+  objetivos.forEach((obj, objIndex) => {
+    html += `
+      <div class="objective-config" style="margin-bottom:24px;border:1px solid #dee2e6;padding:16px;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <input type="text" value="${obj.nombre}" data-type="obj-name" data-obj="${obj.id}" style="font-weight:700;font-size:16px;border:1px solid #ced4da;padding:4px 8px;border-radius:4px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <label>Peso proyecto: <input type="number" value="${obj.pesoProyecto}" data-type="obj-peso" data-obj="${obj.id}" min="0" max="100" style="width:60px"></label>
+            <button class="remove-objective" data-obj="${obj.id}" style="background:#dc3545;color:white;border:none;padding:4px 8px;border-radius:4px">Eliminar</button>
+          </div>
+        </div>
+        <div class="activities-config">
+    `;
+
+    obj.actividades.forEach((act, actIndex) => {
+      html += `
+        <div class="activity-config" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:#f8f9fa;border-radius:4px">
+          <input type="text" value="${act.cod}" data-type="act-cod" data-obj="${obj.id}" data-act="${actIndex}" style="width:60px">
+          <input type="text" value="${act.desc}" data-type="act-desc" data-obj="${obj.id}" data-act="${actIndex}" style="flex:1">
+          <input type="text" value="${act.semana}" data-type="act-semana" data-obj="${obj.id}" data-act="${actIndex}" style="width:80px">
+          <input type="number" value="${act.peso}" data-type="act-peso" data-obj="${obj.id}" data-act="${actIndex}" min="0" max="100" style="width:60px">
+          <button class="remove-activity" data-obj="${obj.id}" data-act="${actIndex}" style="background:#dc3545;color:white;border:none;padding:4px 8px;border-radius:4px">X</button>
+        </div>
+      `;
+    });
+
+    html += `
+        <button class="add-activity" data-obj="${obj.id}" style="margin-top:8px;background:#28a745;color:white;border:none;padding:6px 12px;border-radius:4px">+ Agregar Actividad</button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // Bind config events
+  container.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', updateConfig);
+  });
+
+  container.querySelectorAll('.remove-objective').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const objId = e.target.dataset.obj;
+      objetivos = objetivos.filter(o => o.id !== objId);
+      state.objetivos = objetivos;
+      markTouched();
+      render();
+      renderConfig();
+      saveNowMaybe();
+    });
+  });
+
+  container.querySelectorAll('.remove-activity').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const objId = e.target.dataset.obj;
+      const actIndex = parseInt(e.target.dataset.act);
+      const obj = objetivos.find(o => o.id === objId);
+      obj.actividades.splice(actIndex, 1);
+      state.objetivos = objetivos;
+      markTouched();
+      render();
+      renderConfig();
+      saveNowMaybe();
+    });
+  });
+
+  container.querySelectorAll('.add-activity').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const objId = e.target.dataset.obj;
+      const obj = objetivos.find(o => o.id === objId);
+      const nextCod = obj.actividades.length + 1;
+      obj.actividades.push({
+        cod: `${objId.slice(1)}.${nextCod}`,
+        semana: '1',
+        peso: 10,
+        desc: 'Nueva actividad'
+      });
+      state.objetivos = objetivos;
+      markTouched();
+      render();
+      renderConfig();
+      saveNowMaybe();
+    });
+  });
+}
+
+function updateConfig(){
+  objetivos.forEach(obj => {
+    const objNameInput = document.querySelector(`input[data-type="obj-name"][data-obj="${obj.id}"]`);
+    const objPesoInput = document.querySelector(`input[data-type="obj-peso"][data-obj="${obj.id}"]`);
+    if (objNameInput) obj.nombre = objNameInput.value;
+    if (objPesoInput) obj.pesoProyecto = parseInt(objPesoInput.value) || 0;
+
+    obj.actividades.forEach((act, index) => {
+      const codInput = document.querySelector(`input[data-type="act-cod"][data-obj="${obj.id}"][data-act="${index}"]`);
+      const descInput = document.querySelector(`input[data-type="act-desc"][data-obj="${obj.id}"][data-act="${index}"]`);
+      const semanaInput = document.querySelector(`input[data-type="act-semana"][data-obj="${obj.id}"][data-act="${index}"]`);
+      const pesoInput = document.querySelector(`input[data-type="act-peso"][data-obj="${obj.id}"][data-act="${index}"]`);
+      if (codInput) act.cod = codInput.value;
+      if (descInput) act.desc = descInput.value;
+      if (semanaInput) act.semana = semanaInput.value;
+      if (pesoInput) act.peso = parseInt(pesoInput.value) || 0;
+    });
+  });
+  state.objetivos = objetivos;
+  markTouched();
+  render();
+  saveNowMaybe();
+}
+
+document.getElementById('addObjective').addEventListener('click', () => {
+  const nextId = `o${objetivos.length + 1}`;
+  objetivos.push({
+    id: nextId,
+    nombre: `Objetivo ${objetivos.length + 1}`,
+    pesoProyecto: 10,
+    actividades: [{
+      cod: `${nextId.slice(1)}.1`,
+      semana: '1',
+      peso: 100,
+      desc: 'Nueva actividad'
+    }]
+  });
+  state.objetivos = objetivos;
+  markTouched();
+  render();
+  renderConfig();
+  saveNowMaybe();
+});
+
 // ====== init ======
-function firstLoad(){ pullFromCloud(false).then(()=>{ render(); }).catch(()=>{ render(); }); }
+function firstLoad(){ pullFromCloud(false).then(()=>{ render(); renderWeekPlanning(); renderConfig(); }).catch(()=>{ render(); renderWeekPlanning(); renderConfig(); }); }
 initDatePicker(); firstLoad();
 </script>
 </body>
